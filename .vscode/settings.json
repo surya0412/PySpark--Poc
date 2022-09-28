@@ -1,0 +1,26 @@
+{
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        ".",
+        "-p",
+        "test_*.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestEnabled": true,
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default"
+            },
+            "previewLimit": 50,
+            "server": "192.168.56.101",
+            "port": 3306,
+            "driver": "MySQL",
+            "name": "mysql",
+            "database": "metastore",
+            "username": "myuser",
+            "password": "mypass"
+        }
+    ]
+}
