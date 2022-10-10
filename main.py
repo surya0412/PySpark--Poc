@@ -21,6 +21,7 @@ if __name__ == "__main__":
 
         spark = SparkSession.builder\
                 .appName("pyspark-poc")\
+                .enableHiveSupport()\
                 .master("local")\
                 .getOrCreate()
         spark.sparkContext.setLogLevel("ERROR")
