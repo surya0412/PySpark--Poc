@@ -14,7 +14,7 @@ deaths INTEGER,
 recovered INTEGER,
 active INTEGER);
 
-LOAD DATA INFILE '/Surya/1.csv'
+LOAD DATA INFILE 'gs://dataproc-gs/sql-data/1.csv'
  INTO TABLE corona_pandemic_table
  FIELDS TERMINATED BY ','
  ENCLOSED BY '"'
@@ -39,10 +39,10 @@ PARTITIONED BY (date DATE)
 STORED AS PARQUET;
 
 -- Hive Stage
-CREATE TABLE IF NOT EXISTS corona_pandemic_table_stage(
+CREATE TABLE IF NOT EXISTS mytestdb.corona_pandemic_table_stage(
     province_state  STRING,
 country_region STRING,
-date TIMESTAMP,
+record_date DATE,
 latitude FLOAT,
 longitude FLOAT,
 sub_region1_name STRING,
@@ -57,7 +57,9 @@ STORED AS PARQUET;
 
 -- SQOOP
 
- sqoop import --connect jdbc:mysql://localhost/mysourcedb --username=root --password=cloudera --table=corona_pandemic_table --hive-home=/user/hive/warehouse  --create-hive-table --hive-import  --hive-table=mytestdb.corona_table_stage --split-by=date
+ sqoop import --connect jdbc:mysql://9.43.61.98/test --username=root --password=root --table=corona_pandemic_table --hive-home=/user/hive/warehouse  --create-hive-table --hive-import  --hive-table=mytestdb.corona_table_stage --split-by=date
+
+ sqoop import --connect jdbc:mysql://9.43.61.98/test --username=root --password=root --table=corona_pandemic_table --hive-import  --hive-table=mytestdb.corona_table_stage
 
 
 INSERT OVERWRITE TABLE mytestdb.corona_pandemic_table PARTITION (date) SELECT * FROM mytestdb.corona_pandemic_table_stage ;
