@@ -1,4 +1,4 @@
-#!C:\PySpark- Poc\.env_test\Scripts\python.exe
+#!C:\PySpark-Poc\.env_test\Scripts\python.exe
 
 #
 # Licensed to the Apache Software Foundation (ASF) under one or more

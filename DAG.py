@@ -1,47 +1,29 @@
 import datetime
-import os
-
 from airflow import models
 from airflow.providers.google.cloud.operators import dataproc
 from airflow.utils import trigger_rule
 
-# Output file for Cloud Dataproc job.
-# If you are running Airflow in more than one time zone
-# see https://airflow.apache.org/docs/apache-airflow/stable/timezone.html
-# for best practices
-output_file = os.path.join(
-    '{{ var.value.gcs_bucket }}', 'wordcount',
-    datetime.datetime.now().strftime('%Y%m%d-%H%M%S')) + os.sep
-# Path to Hadoop wordcount example available on every Dataproc cluster.
-WORDCOUNT_JAR = (
-    'file:///usr/lib/hadoop-mapreduce/hadoop-mapreduce-examples.jar'
-)
-# Arguments to pass to Cloud Dataproc job.
-input_file = 'gs://pub/shakespeare/rose.txt'
-wordcount_args = ['wordcount', input_file, output_file]
 
+# Arguments to pass to Cloud Dataproc job.
 PYSPARK_JOB = {
     "reference": {"project_id": '{{ var.value.gcp_project }}'},
-    "placement": {"cluster_name": 'composer-hadoop-tutorial-cluster-{{ ds_nodash }}'},
+    "placement": {"cluster_name": 'cluster-created-from-composer-{{ ds_nodash }}'},
     "pyspark_job": {
-        "main_python_file_uri": 'gs://dataproc-gs/main.py',
-        "python_file_uris": ['gs://dataproc-gs/src.zip']
+        "main_python_file_uri": 'gs://dataproc-gs/pyspark-job/main.py',
+        "python_file_uris": ['gs://dataproc-gs/pyspark-job/src.zip'],
+        "args": ["{{dag_run.conf['name']}}"]
     },
 }
 
-# JOB = {
-#         "placement": {"cluster_name": 'composer-hadoop-tutorial-cluster-{{ ds_nodash }}'},
-#         "pyspark_job": {"main_python_file_uri": "gs://{}/{}".format(gcs_bucket, spark_filename)},
-#     }
-
+# Dataproc Cluster Configuration
 CLUSTER_CONFIG = {
     "master_config": {
         "num_instances": 1,
-        "machine_type_uri": "n1-standard-1"
+        "machine_type_uri": "n1-standard-2"
     },
     "worker_config": {
         "num_instances": 2,
-        "machine_type_uri": "n1-standard-1"
+        "machine_type_uri": "n1-standard-2"
     },
 }
 
@@ -75,11 +57,12 @@ with models.DAG(
     # Create a Cloud Dataproc cluster.
     create_dataproc_cluster = dataproc.DataprocCreateClusterOperator(
         task_id='create_dataproc_cluster',
-        cluster_name='composer-hadoop-tutorial-cluster-{{ ds_nodash }}',
+        cluster_name='cluster-created-from-composer-{{ ds_nodash }}',
         cluster_config=CLUSTER_CONFIG,
         region='{{ var.value.gce_region }}'
     )
 
+    # Runs Pyspark Job on the created cluster
     run_dataproc_hadoop = dataproc.DataprocSubmitJobOperator(
         task_id='run_dataproc_hadoop',
         job=PYSPARK_JOB
@@ -88,9 +71,10 @@ with models.DAG(
     # Delete Cloud Dataproc cluster.
     delete_dataproc_cluster = dataproc.DataprocDeleteClusterOperator(
         task_id='delete_dataproc_cluster',
-        cluster_name='composer-hadoop-tutorial-cluster-{{ ds_nodash }}',
+        cluster_name='cluster-created-from-composer-{{ ds_nodash }}',
         region='{{ var.value.gce_region }}',
         trigger_rule=trigger_rule.TriggerRule.ALL_DONE)
 
     # Define DAG dependencies.
     create_dataproc_cluster >> run_dataproc_hadoop >> delete_dataproc_cluster
+
